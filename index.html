@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <canvas id="canvas" width="800px" height="480px"/>
+    <script>
+      (function() {
+        var Action = {
+          PointITo: function(i) {
+            var _i = i;
+
+            this.i = function() {
+              return _i;
+            };
+          },
+
+          PointJTo: function(j) {
+            var _j = j;
+
+            this.j = function() {
+              return _j;
+            };
+          },
+
+          Select: function(selected) {
+            var _selected = selected;
+
+            this.selected = function(selected) {
+              _selected = selected;
+            };
+          },
+
+          Swap: function(i, j) {
+            var _i = i;
+            var _j = j;
+
+            this.i = function(i) {
+              _i = i;
+            };
+            this.j = function(j) {
+              _j = j;
+            };
+          },
+
+          Compare: function(i, j, result) {
+            var _i = i;
+            var _j = j;
+            var _result = result;
+
+            this.i = function() {
+              return _i;
+            };
+            this.j = function() {
+              return _j;
+            };
+            this.result = function() {
+              return _result;
+            };
+          },
+
+          FixInPlace: function(i) {
+            var _i = i;
+
+            this.i = function() {
+              return _i;
+            };
+          }
+
+        };
+
+        function SortLogBuilder() {
+          var _title;
+          var _initialElements;
+          var _actions = [];
+
+          this.beginingWith = function(initialElements) {
+            _initialElements = initialElements;
+            return this;
+          };
+
+          this.named = function(title) {
+            _title = title;
+            return this;
+          };
+
+          this.pushAction = function(action) {
+            _actions.push(action);
+            return this;
+          };
+
+          this.build = function() {
+            return new SortLog(_title, _initialElements, _actions);
+          }
+        }
+
+        function SortLog(title, initialElements, actions) {
+          var _title = title;
+          var _initialElements = initialElements;
+          var _actions = actions;
+
+          this.elements = function() {
+            return _elements;
+          };
+
+          this.actions = function() {
+            return _actions;
+          };
+
+          this.title = function() {
+            return _title;
+          };
+        }
+
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
+        var target = [8, 5, 2, 6, 3, 4, 1, 7, 9];
+        drawElements(50, 100, 30, target, context);
+
+        var compare = function(e1, e2) {
+          if(e1 == e2)
+            return 0;
+
+          if(e1 > e2)
+            return 1;
+
+          return -1;
+        }
+        var log = sort(target, compare);
+
+        function sort(a, compare) {
+          var elements = a;
+          var log = new SortLogBuilder();
+          log.named("Selection Sort")
+             .beginingWith(elements);
+          for(var i = 0; i<elements.length; i++) {
+            log.pushAction(new Action.PointITo(i));
+            var selected = i;
+            log.pushAction(new Action.Select(i));
+            for(var j = i; j<elements.length; j++) {
+              log.pushAction(new Action.PointJTo(j));
+              var compareResult = compare(elements[j], elements[selected]);
+              log.pushAction(new Action.Compare(j, selected, compareResult));
+              if(compareResult < 0) {
+                selected = j;
+                log.pushAction(new Action.Select(j));
+              }
+            }
+            var copy = elements[selected];
+            elements[selected] = elements[i];
+            elements[i] = copy;
+            log.pushAction(new Action.Swap(i, selected));
+            log.pushAction(new Action.FixInPlace(i));
+          }
+          return log.build();
+        }
+
+        function drawElements(x, y, space, elements, context) {
+          for(var i = 0; i<elements.length; i++) {
+            var element = elements[i];
+            var width = 50;
+            var height = 50;
+            drawElement(i*(width+space) + x, y, width, height, element, context);
+          }
+        }
+
+        function drawElement(x, y, width, height, element, context) {
+          context.lineWidth = 3;
+          context.strokeRect(x, y, width, height);
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.font = (width-5) +"px Arial";
+          context.fillText(element, x + width/2, y + height/2, width);
+        }
+      }());
+    </script>
+  </body>
+</html>
+
